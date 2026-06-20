@@ -149,11 +149,13 @@ class SystemScheduler:
                     break
                 
                 # Si faltan 60 segundos o menos, mostrar advertencia
-                if remaining_seconds <= 60 and self.warning_callback:
-                    try:
-                        self.warning_callback(int(remaining_seconds))
-                    except Exception as e:
-                        print(f"Error en warning_callback: {e}")
+                if remaining_seconds <= 60:
+                    # Llamar al callback inicial para mostrar la ventana
+                    if self.warning_callback:
+                        try:
+                            self.warning_callback(int(remaining_seconds))
+                        except Exception as e:
+                            print(f"Error en warning_callback: {e}")
                     
                     # Esperar el tiempo restante en intervalos pequeños
                     # para poder cancelar rápidamente si es necesario
