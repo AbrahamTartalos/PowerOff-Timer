@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
 from scheduler import SystemScheduler
+from screen_controller import ScreenController
 
 
 class PowerOffTimerApp:
@@ -38,6 +39,7 @@ class PowerOffTimerApp:
         """
         self.root = root
         self.scheduler = SystemScheduler()
+        self.screen_controller = ScreenController()
         self.warning_window = None
         self.countdown_active = False
         
@@ -64,6 +66,42 @@ class PowerOffTimerApp:
         style.configure(
             'Dark.TFrame',
             background=self.COLORS['bg_dark']
+        )
+        
+        # Estilo para Notebook (pestañas)
+        style.configure(
+            'Dark.TNotebook',
+            background=self.COLORS['bg_dark'],
+            borderwidth=0,
+            tabmargins=[2, 5, 2, 0]
+        )
+        
+        style.configure(
+            'Dark.TNotebook.Tab',
+            background=self.COLORS['bg_medium'],
+            foreground=self.COLORS['text_primary'],
+            padding=[20, 10],
+            font=('Segoe UI', 10, 'bold'),
+            borderwidth=1
+        )
+        
+        style.map('Dark.TNotebook.Tab',
+            background=[
+                ('selected', self.COLORS['bg_light']),
+                ('active', self.COLORS['button_hover'])
+            ],
+            foreground=[
+                ('selected', self.COLORS['accent_cyan']),
+                ('active', self.COLORS['text_primary'])
+            ],
+            padding=[
+                ('selected', [20, 12]),  # Ligeramente más grande cuando está seleccionada
+                ('!selected', [20, 10])
+            ],
+            font=[
+                ('selected', ('Segoe UI', 10, 'bold')),
+                ('!selected', ('Segoe UI', 10, 'bold'))
+            ]
         )
         
         # Estilo para Label
@@ -169,7 +207,7 @@ class PowerOffTimerApp:
     def _setup_window(self):
         """Configurar la ventana principal"""
         self.root.title("⚡ PowerOff-Timer")
-        self.root.geometry("450x380")
+        self.root.geometry("500x480")
         self.root.resizable(False, False)
         self.root.configure(bg=self.COLORS['bg_dark'])
         
@@ -187,31 +225,61 @@ class PowerOffTimerApp:
     def _create_widgets(self):
         """Crear todos los widgets de la interfaz"""
         # Frame principal con padding y estilo oscuro
-        main_frame = ttk.Frame(self.root, padding="30", style='Dark.TFrame')
+        main_frame = ttk.Frame(self.root, padding="20", style='Dark.TFrame')
         main_frame.grid(row=0, column=0, sticky=tk.W+tk.E+tk.N+tk.S)
         
-        # Título con icono
+        # Título principal
         title_label = ttk.Label(
             main_frame,
-            text="⚡ Programar Apagado del Sistema",
+            text="⚡ PowerOff-Timer",
             style='Title.TLabel'
         )
-        title_label.grid(row=0, column=0, columnspan=2, pady=(0, 30))
+        title_label.grid(row=0, column=0, pady=(0, 20))
+        
+        # Crear Notebook (sistema de pestañas)
+        self.notebook = ttk.Notebook(main_frame, style='Dark.TNotebook')
+        self.notebook.grid(row=1, column=0, sticky=tk.W+tk.E+tk.N+tk.S, pady=(0, 10))
+        
+        # Crear pestañas
+        self._create_shutdown_tab()
+        self._create_screen_control_tab()
+        
+        # Configurar el grid
+        main_frame.columnconfigure(0, weight=1)
+        main_frame.rowconfigure(1, weight=1)
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
+    
+    def _create_shutdown_tab(self):
+        """Crear la pestaña de programación de apagado"""
+        # Frame para la pestaña
+        shutdown_frame = ttk.Frame(self.notebook, style='Dark.TFrame', padding="20")
+        self.notebook.add(shutdown_frame, text="🔌 Programar Apagado")
+        
+        # Título de la sección
+        section_title = ttk.Label(
+            shutdown_frame,
+            text="Programar Apagado del Sistema",
+            style='Dark.TLabel',
+            font=('Segoe UI', 12, 'bold'),
+            foreground=self.COLORS['accent_cyan']
+        )
+        section_title.grid(row=0, column=0, columnspan=2, pady=(0, 20))
         
         # Separador decorativo
-        separator1 = tk.Frame(main_frame, height=2, bg=self.COLORS['accent_cyan'])
+        separator1 = tk.Frame(shutdown_frame, height=2, bg=self.COLORS['accent_cyan'])
         separator1.grid(row=1, column=0, columnspan=2, sticky=tk.W+tk.E, pady=(0, 20))
         
         # Label y entrada para la hora
         time_label = ttk.Label(
-            main_frame,
+            shutdown_frame,
             text="🕐 Hora (HH:MM):",
             style='Dark.TLabel'
         )
         time_label.grid(row=2, column=0, sticky=tk.W, pady=10)
         
         # Frame para la entrada de hora con fondo
-        time_frame = tk.Frame(main_frame, bg=self.COLORS['bg_dark'])
+        time_frame = tk.Frame(shutdown_frame, bg=self.COLORS['bg_dark'])
         time_frame.grid(row=2, column=1, sticky=tk.W+tk.E, pady=10)
         
         # Entrada de hora con validación y estilo
@@ -267,7 +335,7 @@ class PowerOffTimerApp:
         
         # Label y selector de acción
         action_label = ttk.Label(
-            main_frame,
+            shutdown_frame,
             text="⚙️ Acción:",
             style='Dark.TLabel'
         )
@@ -275,7 +343,7 @@ class PowerOffTimerApp:
         
         self.action_var = tk.StringVar()
         action_combo = ttk.Combobox(
-            main_frame,
+            shutdown_frame,
             textvariable=self.action_var,
             values=[
                 SystemScheduler.ACTION_SHUTDOWN,
@@ -291,11 +359,11 @@ class PowerOffTimerApp:
         action_combo.current(0)  # Seleccionar "Apagar" por defecto
         
         # Separador decorativo
-        separator2 = tk.Frame(main_frame, height=2, bg=self.COLORS['accent_cyan'])
+        separator2 = tk.Frame(shutdown_frame, height=2, bg=self.COLORS['accent_cyan'])
         separator2.grid(row=4, column=0, columnspan=2, sticky=tk.W+tk.E, pady=(20, 20))
         
         # Frame para los botones
-        button_frame = tk.Frame(main_frame, bg=self.COLORS['bg_dark'])
+        button_frame = tk.Frame(shutdown_frame, bg=self.COLORS['bg_dark'])
         button_frame.grid(row=5, column=0, columnspan=2, pady=10)
         
         # Botón Programar
@@ -321,7 +389,7 @@ class PowerOffTimerApp:
         
         # Label de estado
         self.status_label = ttk.Label(
-            main_frame,
+            shutdown_frame,
             text="Estado: Esperando...",
             style='Status.TLabel'
         )
@@ -329,16 +397,198 @@ class PowerOffTimerApp:
         
         # Label de tiempo restante
         self.time_remaining_label = ttk.Label(
-            main_frame,
+            shutdown_frame,
             text="",
             style='Time.TLabel'
         )
         self.time_remaining_label.grid(row=7, column=0, columnspan=2, pady=5)
         
         # Configurar el grid para que se expanda
-        main_frame.columnconfigure(1, weight=1)
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
+        shutdown_frame.columnconfigure(1, weight=1)
+    
+    def _create_screen_control_tab(self):
+        """Crear la pestaña de control de pantalla"""
+        # Frame para la pestaña
+        screen_frame = ttk.Frame(self.notebook, style='Dark.TFrame', padding="20")
+        self.notebook.add(screen_frame, text="🖥️ Control de Pantalla")
+        
+        # Título de la sección
+        section_title = ttk.Label(
+            screen_frame,
+            text="Control de Tiempo de Apagado de Pantalla",
+            style='Dark.TLabel',
+            font=('Segoe UI', 12, 'bold'),
+            foreground=self.COLORS['accent_cyan']
+        )
+        section_title.grid(row=0, column=0, columnspan=2, pady=(0, 15))
+        
+        # Descripción
+        description = ttk.Label(
+            screen_frame,
+            text="Configura el tiempo de inactividad antes de que\nla pantalla se apague automáticamente.",
+            style='Dark.TLabel',
+            font=('Segoe UI', 9),
+            foreground=self.COLORS['text_secondary'],
+            justify=tk.CENTER
+        )
+        description.grid(row=1, column=0, columnspan=2, pady=(0, 20))
+        
+        # Separador decorativo
+        separator = tk.Frame(screen_frame, height=2, bg=self.COLORS['accent_cyan'])
+        separator.grid(row=2, column=0, columnspan=2, sticky=tk.W+tk.E, pady=(0, 20))
+        
+        # Configuración actual
+        self.current_config_label = ttk.Label(
+            screen_frame,
+            text="Cargando configuración actual...",
+            style='Dark.TLabel',
+            font=('Segoe UI', 9),
+            foreground=self.COLORS['accent_green']
+        )
+        self.current_config_label.grid(row=3, column=0, columnspan=2, pady=(0, 20))
+        
+        # Label para selección de tiempo
+        time_select_label = ttk.Label(
+            screen_frame,
+            text="⏱️ Tiempo de apagado:",
+            style='Dark.TLabel'
+        )
+        time_select_label.grid(row=4, column=0, sticky=tk.W, pady=10)
+        
+        # Combobox para seleccionar tiempo
+        self.screen_timeout_var = tk.StringVar()
+        timeout_combo = ttk.Combobox(
+            screen_frame,
+            textvariable=self.screen_timeout_var,
+            values=list(ScreenController.TIME_OPTIONS.keys()),
+            state="readonly",
+            width=20,
+            style='Dark.TCombobox',
+            font=('Segoe UI', 10)
+        )
+        timeout_combo.grid(row=4, column=1, sticky=tk.W+tk.E, pady=10)
+        timeout_combo.current(2)  # Seleccionar "10 minutos" por defecto
+        
+        # Separador decorativo
+        separator2 = tk.Frame(screen_frame, height=2, bg=self.COLORS['accent_cyan'])
+        separator2.grid(row=5, column=0, columnspan=2, sticky=tk.W+tk.E, pady=(20, 20))
+        
+        # Frame para botones
+        button_frame = tk.Frame(screen_frame, bg=self.COLORS['bg_dark'])
+        button_frame.grid(row=6, column=0, columnspan=2, pady=10)
+        
+        # Botón Aplicar
+        apply_button = ttk.Button(
+            button_frame,
+            text="✓ Aplicar Configuración",
+            command=self._on_apply_screen_timeout,
+            style='Schedule.TButton',
+            width=25
+        )
+        apply_button.grid(row=0, column=0, padx=5)
+        
+        # Botón Actualizar
+        refresh_button = ttk.Button(
+            button_frame,
+            text="🔄 Actualizar",
+            command=self._load_current_screen_config,
+            style='Cancel.TButton',
+            width=15
+        )
+        refresh_button.grid(row=0, column=1, padx=5)
+        
+        # Label de estado de la operación
+        self.screen_status_label = ttk.Label(
+            screen_frame,
+            text="",
+            style='Status.TLabel'
+        )
+        self.screen_status_label.grid(row=7, column=0, columnspan=2, pady=(15, 5))
+        
+        # Configurar el grid
+        screen_frame.columnconfigure(1, weight=1)
+        
+        # Cargar configuración actual al iniciar
+        self.root.after(100, self._load_current_screen_config)
+    def _load_current_screen_config(self):
+        """Cargar y mostrar la configuración actual de tiempo de apagado de pantalla"""
+        success, ac_minutes, dc_minutes, message = self.screen_controller.get_current_timeout()
+        
+        if success:
+            ac_desc = self.screen_controller.get_timeout_description(ac_minutes)
+            dc_desc = self.screen_controller.get_timeout_description(dc_minutes)
+            
+            self.current_config_label.config(
+                text=f"📊 Configuración actual:\nConectado (AC): {ac_desc} | Batería (DC): {dc_desc}",
+                foreground=self.COLORS['accent_green']
+            )
+            self.screen_status_label.config(text="")
+        else:
+            self.current_config_label.config(
+                text=f"⚠️ Error al cargar configuración: {message}",
+                foreground=self.COLORS['error']
+            )
+    
+    def _on_apply_screen_timeout(self):
+        """Aplicar el nuevo tiempo de apagado de pantalla"""
+        selected_option = self.screen_timeout_var.get()
+        
+        if not selected_option:
+            messagebox.showerror("Error", "Por favor selecciona un tiempo")
+            return
+        
+        # Obtener los minutos correspondientes
+        minutes = ScreenController.TIME_OPTIONS.get(selected_option)
+        
+        if minutes is None:
+            messagebox.showerror("Error", "Opción inválida")
+            return
+        
+        # Confirmar la acción
+        if minutes == 0:
+            confirm_msg = "¿Deseas configurar la pantalla para que NUNCA se apague automáticamente?"
+        elif minutes == 60:
+            confirm_msg = "¿Deseas configurar la pantalla para que se apague después de 1 hora?"
+        elif minutes > 60:
+            hours = minutes // 60
+            remaining = minutes % 60
+            if remaining == 0:
+                confirm_msg = f"¿Deseas configurar la pantalla para que se apague después de {hours} hora{'s' if hours > 1 else ''}?"
+            else:
+                confirm_msg = f"¿Deseas configurar la pantalla para que se apague después de {hours} hora{'s' if hours > 1 else ''} y {remaining} minuto{'s' if remaining > 1 else ''}?"
+        else:
+            confirm_msg = f"¿Deseas configurar la pantalla para que se apague después de {minutes} minuto{'s' if minutes > 1 else ''}?"
+        
+        if not messagebox.askyesno("Confirmar", confirm_msg):
+            return
+        
+        # Aplicar la configuración
+        success, message = self.screen_controller.set_screen_timeout(minutes)
+        
+        if success:
+            self.screen_status_label.config(
+                text=f"✓ {message}",
+                foreground=self.COLORS['success']
+            )
+            messagebox.showinfo("✓ Éxito", message)
+            
+            # Actualizar la configuración mostrada
+            self.root.after(500, self._load_current_screen_config)
+        else:
+            self.screen_status_label.config(
+                text=f"✕ Error: {message}",
+                foreground=self.COLORS['error']
+            )
+            
+            # Verificar si es un problema de permisos
+            if "acceso" in message.lower() or "denied" in message.lower():
+                messagebox.showerror(
+                    "Error de Permisos",
+                    f"{message}\n\nPuede que necesites ejecutar la aplicación como Administrador."
+                )
+            else:
+                messagebox.showerror("Error", message)
+    
     
     def _on_schedule_click(self):
         """Manejar el clic en el botón Programar"""
