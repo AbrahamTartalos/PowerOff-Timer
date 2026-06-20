@@ -49,6 +49,9 @@ class PowerOffTimerApp:
         # Configurar la ventana principal
         self._setup_window()
         
+        # Crear la barra de menú
+        self._create_menu_bar()
+        
         # Crear la interfaz
         self._create_widgets()
         
@@ -207,7 +210,7 @@ class PowerOffTimerApp:
     def _setup_window(self):
         """Configurar la ventana principal"""
         self.root.title("⚡ PowerOff-Timer")
-        self.root.geometry("500x480")
+        self.root.geometry("500x510")
         self.root.resizable(False, False)
         self.root.configure(bg=self.COLORS['bg_dark'])
         
@@ -221,6 +224,194 @@ class PowerOffTimerApp:
         
         # Configurar el cierre de la ventana
         self.root.protocol("WM_DELETE_WINDOW", self._on_closing)
+    
+    def _create_menu_bar(self):
+        """Crear la barra de menú de la aplicación"""
+        menubar = tk.Menu(self.root, bg=self.COLORS['bg_medium'], fg=self.COLORS['text_primary'])
+        self.root.config(menu=menubar)
+        
+        # Menú Ayuda
+        help_menu = tk.Menu(
+            menubar,
+            tearoff=0,
+            bg=self.COLORS['bg_medium'],
+            fg=self.COLORS['text_primary'],
+            activebackground=self.COLORS['accent_cyan'],
+            activeforeground='#000000'
+        )
+        menubar.add_cascade(label="Ayuda", menu=help_menu)
+        help_menu.add_command(label="Acerca de", command=self._show_about_dialog)
+    
+    def _show_about_dialog(self):
+        """Mostrar ventana de diálogo 'Acerca de'"""
+        # Crear ventana modal
+        about_window = tk.Toplevel(self.root)
+        about_window.title("Acerca de PowerOff-Timer")
+        about_window.geometry("400x350")
+        about_window.resizable(False, False)
+        about_window.configure(bg=self.COLORS['bg_dark'])
+        
+        # Hacer la ventana modal
+        about_window.transient(self.root)
+        about_window.grab_set()
+        
+        # Centrar la ventana
+        about_window.update_idletasks()
+        width = about_window.winfo_width()
+        height = about_window.winfo_height()
+        x = (about_window.winfo_screenwidth() // 2) - (width // 2)
+        y = (about_window.winfo_screenheight() // 2) - (height // 2)
+        about_window.geometry(f'{width}x{height}+{x}+{y}')
+        
+        # Frame principal
+        main_frame = tk.Frame(
+            about_window,
+            bg=self.COLORS['bg_dark'],
+            padx=30,
+            pady=20
+        )
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Borde decorativo superior
+        top_border = tk.Frame(main_frame, height=3, bg=self.COLORS['accent_cyan'])
+        top_border.pack(fill=tk.X, pady=(0, 20))
+        
+        # Icono y nombre de la app
+        app_name_label = tk.Label(
+            main_frame,
+            text="⚡ PowerOff-Timer",
+            font=("Segoe UI", 20, "bold"),
+            bg=self.COLORS['bg_dark'],
+            fg=self.COLORS['accent_cyan']
+        )
+        app_name_label.pack(pady=(0, 5))
+        
+        # Versión
+        version_label = tk.Label(
+            main_frame,
+            text="v2.0",
+            font=("Segoe UI", 11),
+            bg=self.COLORS['bg_dark'],
+            fg=self.COLORS['text_secondary']
+        )
+        version_label.pack(pady=(0, 20))
+        
+        # Separador
+        separator = tk.Frame(main_frame, height=1, bg=self.COLORS['bg_light'])
+        separator.pack(fill=tk.X, pady=(0, 20))
+        
+        # Información del desarrollador
+        dev_label = tk.Label(
+            main_frame,
+            text="Desarrollador",
+            font=("Segoe UI", 10, "bold"),
+            bg=self.COLORS['bg_dark'],
+            fg=self.COLORS['text_primary']
+        )
+        dev_label.pack(pady=(0, 5))
+        
+        dev_name_label = tk.Label(
+            main_frame,
+            text="Abraham Tartalos",
+            font=("Segoe UI", 11),
+            bg=self.COLORS['bg_dark'],
+            fg=self.COLORS['accent_green']
+        )
+        dev_name_label.pack(pady=(0, 15))
+        
+        # Copyright
+        copyright_label = tk.Label(
+            main_frame,
+            text="© 2026",
+            font=("Segoe UI", 9),
+            bg=self.COLORS['bg_dark'],
+            fg=self.COLORS['text_secondary']
+        )
+        copyright_label.pack(pady=(0, 15))
+        
+        # GitHub
+        github_frame = tk.Frame(main_frame, bg=self.COLORS['bg_dark'])
+        github_frame.pack(pady=(0, 5))
+        
+        github_icon = tk.Label(
+            github_frame,
+            text="🔗",
+            font=("Segoe UI", 11),
+            bg=self.COLORS['bg_dark'],
+            fg=self.COLORS['text_primary']
+        )
+        github_icon.pack(side=tk.LEFT, padx=(0, 5))
+        
+        github_label = tk.Label(
+            github_frame,
+            text="https://github.com/AbrahamTartalos",
+            font=("Segoe UI", 9, "underline"),
+            bg=self.COLORS['bg_dark'],
+            fg=self.COLORS['accent_cyan'],
+            cursor="hand2"
+        )
+        github_label.pack(side=tk.LEFT)
+        
+        # Hacer el link clickeable
+        github_label.bind("<Button-1>", lambda e: self._open_url("https://github.com/AbrahamTartalos"))
+        
+        # Email
+        email_frame = tk.Frame(main_frame, bg=self.COLORS['bg_dark'])
+        email_frame.pack(pady=(0, 20))
+        
+        email_icon = tk.Label(
+            email_frame,
+            text="📧",
+            font=("Segoe UI", 11),
+            bg=self.COLORS['bg_dark'],
+            fg=self.COLORS['text_primary']
+        )
+        email_icon.pack(side=tk.LEFT, padx=(0, 5))
+        
+        # Entry de solo lectura para permitir selección y copia
+        email_entry = tk.Entry(
+            email_frame,
+            font=("Segoe UI", 9),
+            bg=self.COLORS['bg_dark'],
+            fg=self.COLORS['text_primary'],
+            relief=tk.FLAT,
+            borderwidth=0,
+            readonlybackground=self.COLORS['bg_dark'],
+            highlightthickness=0,
+            width=28,
+            justify=tk.CENTER
+        )
+        email_entry.insert(0, "abrahamrtartalos@gmail.com")
+        email_entry.config(state='readonly')
+        email_entry.pack(side=tk.LEFT)
+        
+        # Botón Cerrar
+        close_button = tk.Button(
+            main_frame,
+            text="Cerrar",
+            command=about_window.destroy,
+            bg=self.COLORS['accent_cyan'],
+            fg='#000000',
+            font=('Segoe UI', 10, 'bold'),
+            relief=tk.FLAT,
+            padx=30,
+            pady=8,
+            cursor='hand2',
+            activebackground=self.COLORS['button_hover'],
+            activeforeground='#ffffff'
+        )
+        close_button.pack(pady=(10, 0))
+        
+        # Foco en el botón cerrar
+        close_button.focus_set()
+        
+        # Permitir cerrar con ESC
+        about_window.bind('<Escape>', lambda e: about_window.destroy())
+    
+    def _open_url(self, url: str):
+        """Abrir URL en el navegador predeterminado"""
+        import webbrowser
+        webbrowser.open(url)
     
     def _create_widgets(self):
         """Crear todos los widgets de la interfaz"""
